@@ -39,7 +39,7 @@ Scene Scene::simpleScene() {
 	shared_ptr<Material> green = make_shared<Material>(vec3(0, 0.8f, 0), 1.05f, 0.1f, 0);
 
 	// create a box on a sphere
-	objects.push_back(make_shared<SceneObject>(make_shared<Sphere>(vec3(0, -2, -10), 1), shiny_red));
+	objects.push_back(make_shared<SceneObject>(make_shared<Sphere>(vec3(0, -1, -10), 1), shiny_red));
 	objects.push_back(make_shared<SceneObject>(make_shared<AABB>(vec3(0, -3.5f, -10), vec3(3, 0.5, 3)), green));
 
 	// one directional light

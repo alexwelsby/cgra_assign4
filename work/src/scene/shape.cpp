@@ -1,4 +1,4 @@
-
+﻿
 // std
 #include <algorithm>
 #include <utility>
@@ -79,6 +79,39 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 
 	// YOUR CODE GOES HERE
 	// ...
+
+	float boid_radius = m_radius;
+	vec3 O = ray.origin;
+	vec3 D = ray.direction;
+	float sphere_radius = m_radius;
+
+	vec3 C = m_center; //the center of this sphere
+
+	float R = sphere_radius + boid_radius; //sphere radius when intersecting with cylinder
+	//now for some quadratic nonsense
+	float a = glm::dot(D, D);  //a = D DOT D
+	float b = 2.0f * glm::dot(O - C, D); //b = 2[O − C] DOT D
+	float c = (glm::dot(O - C, O - C)) - (R * R); //c = [O − C] DOT [O − C] − R^2
+	float discriminant = (b * b) - (4 * a * c); //(b^2)-4ac
+	if (discriminant < 0) {
+		return intersect;
+	}
+	else if (discriminant >= 0) { //we have two real solutions
+		float t1 = (-b + sqrt(discriminant)) / (2 * a);
+		float t2 = (-b - sqrt(discriminant)) / (2 * a);
+		float t = 0.0f;
+		t = glm::min(t1, t2);
+
+			
+		vec3 P = O + t * D;
+		vec3 N = glm::normalize(P - C);
+		
+		intersect.m_valid = true;
+		intersect.m_distance = t;
+		intersect.m_position = P;
+		intersect.m_normal = N;
+		return intersect;
+	}
 
 	return intersect;
 }

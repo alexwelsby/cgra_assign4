@@ -4,4 +4,7 @@
 /res
 /src
 /x64
+/.vs
+/bin
+*.pdf
 imgui.ini
