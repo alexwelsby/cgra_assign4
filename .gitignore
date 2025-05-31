@@ -7,4 +7,5 @@
 /.vs
 /bin
 *.pdf
+*.mov
 imgui.ini

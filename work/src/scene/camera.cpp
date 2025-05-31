@@ -41,16 +41,16 @@ Ray Camera::generateRay(const vec2 &pixel) {
 	float aspect = m_image_size.x / m_image_size.y;
 	float tan_theta = tan(m_fovy / 2);
 	//PR=(tanθ, 0, –1)
-	vec3 Pr = vec3(tan_theta, 0, 1);
+	vec3 Pr = vec3(tan_theta * aspect, 0, -1);
 	//PL=(–tanθ, 0, –1)
-	vec3 Pl = vec3(-tan_theta, 0, 1);
+	vec3 Pl = vec3(-tan_theta * aspect, 0, -1);
 	//cout << "HEYYY" << m_image_size.x << "," << m_image_size.y << endl;
 	//Pi = PL + ( i + 0.5 )/N × ( PR – PL )
 	vec2 Pi_x = Pl + (pixel.x + 0.5f) / m_image_size.x * (Pr - Pl);
 
 	//now for vertical>??
-	Pr = vec3(0, tan_theta, 1);
-	Pl = vec3(0, -tan_theta, 1);
+	Pr = vec3(0, tan_theta, -1);
+	Pl = vec3(0, -tan_theta, -1);
 	vec2 Pi_y = Pl + (pixel.y + 0.5f) / m_image_size.y * (Pr - Pl);
 
 	vec3 Pi = vec3(Pi_x.x, Pi_y.y, -1.0f);

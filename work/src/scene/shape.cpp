@@ -80,14 +80,12 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 	// YOUR CODE GOES HERE
 	// ...
 
-	float boid_radius = m_radius;
 	vec3 O = ray.origin;
 	vec3 D = ray.direction;
-	float sphere_radius = m_radius;
 
 	vec3 C = m_center; //the center of this sphere
 
-	float R = sphere_radius + boid_radius; //sphere radius when intersecting with cylinder
+	float R = m_radius; 
 	//now for some quadratic nonsense
 	float a = glm::dot(D, D);  //a = D DOT D
 	float b = 2.0f * glm::dot(O - C, D); //b = 2[O − C] DOT D
