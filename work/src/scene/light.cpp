@@ -39,7 +39,7 @@ bool DirectionalLight::occluded(Scene *scene, const vec3 &point) const {
 
 
 vec3 DirectionalLight::incidentDirection(const vec3 &) const {
-	return glm::normalize(m_direction);
+	return -glm::normalize(m_direction);
 }
 
 
@@ -87,7 +87,7 @@ vec3 PointLight::incidentDirection(const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	return -glm::normalize(m_position - point);
+	return glm::normalize(m_position - point);
 }
 
 

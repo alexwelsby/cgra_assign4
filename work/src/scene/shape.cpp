@@ -2,6 +2,7 @@
 // std
 #include <algorithm>
 #include <utility>
+#include <iostream>
 
 // glm
 #include <glm/glm.hpp>
@@ -98,7 +99,18 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 		float t1 = (-b + sqrt(discriminant)) / (2 * a);
 		float t2 = (-b - sqrt(discriminant)) / (2 * a);
 		float t = 0.0f;
-		t = glm::min(t1, t2);
+		if (t1 > 0 && t2 > 0) {
+			t = glm::min(t1, t2);
+		}
+		else if (t1 == t2) {
+			t = t1;
+		}
+		else if (t1 < 0 && t2 > 0) {
+			t = t2;
+		}
+		else {
+			return intersect;
+		}
 
 			
 		vec3 P = O + t * D;
@@ -108,9 +120,13 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 		intersect.m_distance = t;
 		intersect.m_position = P;
 		intersect.m_normal = N;
+		intersect.m_shape = this;
+		intersect.m_uv_coord = (abs(intersect.m_normal.x) > 0) ?
+			vec2(intersect.m_position.y, intersect.m_position.z) :
+			vec2(intersect.m_position.x, intersect.m_position.y + intersect.m_position.z);
 		return intersect;
 	}
-
+	
 	return intersect;
 }
 
