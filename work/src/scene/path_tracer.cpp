@@ -71,41 +71,28 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 
 		vec3 norm = normalize(intersect.m_normal);
 		for (const auto& light : m_scene->lights()) {
-			vec3 shadowOrigin = fragPos + 1e-4f * norm;
-			if (!light->occluded(m_scene, shadowOrigin)) {
+			if (!light->occluded(m_scene, fragPos)) {
 				vec3 lightColor = light->ambience();
-				vec3 lightPower = light->irradiance(shadowOrigin);
-				vec3 lightDir = light->incidentDirection(shadowOrigin);
+				vec3 lightPower = light->irradiance(fragPos);
+				vec3 lightDir = light->incidentDirection(fragPos);
 				
-				float distance = glm::dot(lightDir, lightDir);
+				float ambientStrength = 0.1;
+				vec3 ambient = ambientStrength * objectColor;
+				//cout << intersect.m_normal.x << "," << intersect.m_normal.y << "," << intersect.m_normal.z << endl;
+				//lightDir = normalize(-lightDir);
 
-				float lambertian = glm::max(glm::dot(lightDir, norm), 0.0f);
-				float specular = 0.0;
+				float diff = glm::max(glm::dot(norm, lightDir), 0.0f);
+				vec3 diffuse = diff * lightColor;
 
-				if (lambertian > 0.0) {
-					vec3 viewDir = normalize(-ray.direction);
+				float specularStrength = 0.5;
+				vec3 reflectDir = reflect(-lightDir, norm);
+				vec3 viewDir = normalize(fragPos);
 
-					//blinn phong
+				vec3 halfwayDir = normalize(lightDir + viewDir);
+				float spec = glm::pow(glm::max(glm::dot(norm, halfwayDir), 0.0f), 32);
+				vec3 specular = specularStrength * spec * lightColor;
 
-					vec3 halfDir = normalize(lightDir + viewDir);
-					float specAngle = glm::max(glm::dot(halfDir, norm), 0.0f);
-					specular = glm::pow(specAngle, shininess);
-				}
-
-				result = ambientColor + diffuseColor * lambertian * lightColor * lightPower / distance + specColor * specular * lightColor * lightPower / distance;
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
+				result += (ambient + diffuse + specular) * objectColor;
 			}
 		}
 		return result;
