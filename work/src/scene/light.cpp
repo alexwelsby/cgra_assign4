@@ -39,7 +39,7 @@ bool DirectionalLight::occluded(Scene *scene, const vec3 &point) const {
 
 
 vec3 DirectionalLight::incidentDirection(const vec3 &) const {
-	return m_direction;
+	return glm::normalize(m_direction);
 }
 
 
@@ -60,19 +60,21 @@ bool PointLight::occluded(Scene *scene, const vec3 &point) const {
 
 	// YOUR CODE GOES HERE
 	// ...
+
 	Ray shadow_ray;
 	vec3 to_light = m_position - point;
 	float dist_to_light = glm::length(to_light);
-	//const float epsilon = 1e-4f;
-	shadow_ray.origin = point + to_light;
-	shadow_ray.direction = to_light;
+	const float epsilon = 1e-4f;
+	shadow_ray.origin = point + epsilon * to_light;
+	shadow_ray.direction = normalize(to_light);
+
 	for (std::shared_ptr<SceneObject> object : scene->objects()) {
-		RayIntersection ray_intersect = object->intersect(shadow_ray);
-		if (ray_intersect.m_valid && ray_intersect.m_distance < dist_to_light) {
-			return true;
+		RayIntersection hit = object->intersect(shadow_ray);
+		if (hit.m_valid && hit.m_distance < dist_to_light) {
+			return true; //blocked light
 		}
 	}
-	return false;
+	return false; //no occlusion
 }
 
 
@@ -85,7 +87,7 @@ vec3 PointLight::incidentDirection(const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	return glm::normalize(point - m_position);
+	return -glm::normalize(m_position - point);
 }
 
 
@@ -103,10 +105,14 @@ vec3 PointLight::irradiance(const vec3 &point) const {
 	// ...
 
 	vec3 to_light = m_position - point;
+	const float epsilon = 1e-4f;
 	float dist_to_light = glm::length(to_light);
 
+	if (dist_to_light < epsilon)
+		return vec3(0.0f); 
+
 	//we divide the total energy of the light by 4π and the squared distance to the point light.
-	vec3 new_flux = m_flux / ((4 * glm::pi<float>() * glm::sqrt(dist_to_light)) );
+	vec3 new_flux = m_flux / (4 * glm::pi<float>() * dist_to_light * dist_to_light);
 
 	return new_flux;
 }
