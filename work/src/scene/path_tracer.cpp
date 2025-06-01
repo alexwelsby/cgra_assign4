@@ -53,34 +53,58 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 
 	// if ray hit something
 	if (intersect.m_valid) {
-		vec3 color(0.5, 0.5, 0.5);
 
-		float ambientStrength = 0.1;
-		float specularStrength = 0.5;
-		float diffuseStrength = 0.5;
-		float shiniStrength = 1.0;
+		vec3 norm = normalize(intersect.m_normal);
+		if (glm::dot(norm, ray.direction) > 0) norm = -norm;
 		vec3 fragPos = intersect.m_position;
 
-		vec3 ambient = ambientStrength * color;
+		vec3 objectColor(0.5, 0.5, 0.5);
+		vec3 result = vec3(0.0f);
 
-		vec3 normal = normalize(intersect.m_normal);
+		Material* mat = intersect.m_material;
 
-		float diff = glm::max(glm::dot(normal, ray.direction), 0.0f);
-		vec3 diffuse = diff * diffuseStrength * color;
+		vec3 diffuse_color = mat->diffuse();
 
-		vec3 reflectDir = glm::reflect(ray.direction, normal);
-		vec3 viewDir = normalize(-fragPos);
+		vec3 specular_color = mat->specular();
 
-		float spec = glm::pow(glm::max(glm::dot(viewDir, reflectDir), 0.0f), shiniStrength);
-		vec3 specular = specularStrength * spec * color;
+		float mat_shininess = mat->shininess();
 
-		vec3 calcColor = (ambient + diffuse + specular) * color;
 
-		return calcColor;
+		int i = 0;
 
+		for (const auto& light : m_scene->lights()) {
+			//cout << i << endl;
+			i += 1;
+			if (!light->occluded(m_scene, fragPos)) { //if the point of the intersect is not occluded
+				//scene is completely black for light 0 (directional)
+				//has weird shadow for light 1 (point)
+				//mostly ok for light 2 (point)
+				vec3 lightColor = light->ambience();
+				vec3 lightStrength = light->irradiance(fragPos);
+				vec3 lightDir = light->incidentDirection(fragPos);
+				
+				float ambientStrength = 0.1;
+				vec3 ambient = ambientStrength * lightColor;
+				//cout << intersect.m_normal.x << "," << intersect.m_normal.y << "," << intersect.m_normal.z << endl;
+				//lightDir = normalize(-lightDir);
+
+				vec3 diffuse = mat->diffuse();
+
+				float specularStrength = 0.5;
+				vec3 reflectDir = reflect(-lightDir, norm);
+				vec3 viewDir = normalize(-ray.direction);
+
+				vec3 halfwayDir = normalize(lightDir + viewDir);
+				float spec = glm::pow(glm::max(glm::dot(halfwayDir, norm), 0.0f), mat_shininess);
+				vec3 specular = spec * specular_color;
+
+				result += (ambient + diffuse + specular) * (lightStrength);
+				
+			}
+		}
+
+		return result;
 	}
-
-
 	// no intersection - return background color
 	return { 0.3f, 0.3f, 0.4f };
 }
