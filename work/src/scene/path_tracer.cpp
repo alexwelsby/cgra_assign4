@@ -71,18 +71,19 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 
 		vec3 norm = normalize(intersect.m_normal);
 		for (const auto& light : m_scene->lights()) {
-			if (!light->occluded(m_scene, fragPos)) {
+			vec3 shadowOrigin = fragPos + 1e-4f * norm;
+			if (!light->occluded(m_scene, shadowOrigin)) {
 				vec3 lightColor = light->ambience();
-				vec3 lightPower = light->irradiance(fragPos);
-				vec3 lightDir = light->incidentDirection(fragPos);
+				vec3 lightPower = light->irradiance(shadowOrigin);
+				vec3 lightDir = light->incidentDirection(shadowOrigin);
 				
-				float distance = glm::length(lightDir);
+				float distance = glm::dot(lightDir, lightDir);
 
 				float lambertian = glm::max(glm::dot(lightDir, norm), 0.0f);
 				float specular = 0.0;
 
 				if (lambertian > 0.0) {
-					vec3 viewDir = normalize(-fragPos);
+					vec3 viewDir = normalize(-ray.direction);
 
 					//blinn phong
 
@@ -90,8 +91,21 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 					float specAngle = glm::max(glm::dot(halfDir, norm), 0.0f);
 					specular = glm::pow(specAngle, shininess);
 				}
-				 
-				result += ambientColor + diffuseColor * lambertian * lightColor * lightPower / distance + specColor * specular * lightColor * lightPower / distance;
+
+				result = ambientColor + diffuseColor * lambertian * lightColor * lightPower / distance + specColor * specular * lightColor * lightPower / distance;
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
 			}
 		}
 		return result;
