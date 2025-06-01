@@ -41,6 +41,7 @@ Ray Camera::generateRay(const vec2 &pixel) {
 	float aspect = m_image_size.x / m_image_size.y;
 	float tan_theta = tan(m_fovy / 2);
 	//PR=(tanθ, 0, –1)
+	//it gets squished if we don't factor in the aspect
 	vec3 Pr = vec3(tan_theta * aspect, 0, -1);
 	//PL=(–tanθ, 0, –1)
 	vec3 Pl = vec3(-tan_theta * aspect, 0, -1);

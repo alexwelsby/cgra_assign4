@@ -1,9 +1,11 @@
-
+﻿
 // glm
 #include <glm/gtc/constants.hpp>
 
 // project
 #include "light.hpp"
+
+#include "scene_object.hpp"
 
 using namespace glm;
 
@@ -19,6 +21,18 @@ bool DirectionalLight::occluded(Scene *scene, const vec3 &point) const {
 
 	// YOUR CODE GOES HERE
 	// ...
+
+	Ray shadow_ray;
+	const float epsilon = 1e-4f;
+	shadow_ray.origin = point + epsilon * -m_direction;
+	shadow_ray.direction = -m_direction;
+
+	for (std::shared_ptr<SceneObject> object : scene->objects()) {
+		RayIntersection ray_intersect = object->intersect(shadow_ray);
+		if (ray_intersect.m_valid) {
+			return true;
+		}
+	}
 
 	return false;
 }
@@ -46,7 +60,18 @@ bool PointLight::occluded(Scene *scene, const vec3 &point) const {
 
 	// YOUR CODE GOES HERE
 	// ...
-
+	Ray shadow_ray;
+	vec3 to_light = m_position - point;
+	float dist_to_light = glm::length(to_light);
+	//const float epsilon = 1e-4f;
+	shadow_ray.origin = point + to_light;
+	shadow_ray.direction = to_light;
+	for (std::shared_ptr<SceneObject> object : scene->objects()) {
+		RayIntersection ray_intersect = object->intersect(shadow_ray);
+		if (ray_intersect.m_valid && ray_intersect.m_distance < dist_to_light) {
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -60,7 +85,7 @@ vec3 PointLight::incidentDirection(const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	return vec3(0);
+	return glm::normalize(point - m_position);
 }
 
 
@@ -77,5 +102,11 @@ vec3 PointLight::irradiance(const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	return vec3(0);
+	vec3 to_light = m_position - point;
+	float dist_to_light = glm::length(to_light);
+
+	//we divide the total energy of the light by 4π and the squared distance to the point light.
+	vec3 new_flux = m_flux / ((4 * glm::pi<float>() * glm::sqrt(dist_to_light)) );
+
+	return new_flux;
 }

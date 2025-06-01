@@ -49,6 +49,37 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 
 	// YOUR CODE GOES HERE
 	// ...
+	RayIntersection intersect = m_scene->intersect(ray);
+
+	// if ray hit something
+	if (intersect.m_valid) {
+		vec3 color(0.5, 0.5, 0.5);
+
+		float ambientStrength = 0.1;
+		float specularStrength = 0.5;
+		float diffuseStrength = 0.5;
+		float shiniStrength = 1.0;
+		vec3 fragPos = intersect.m_position;
+
+		vec3 ambient = ambientStrength * color;
+
+		vec3 normal = normalize(intersect.m_normal);
+
+		float diff = glm::max(glm::dot(normal, ray.direction), 0.0f);
+		vec3 diffuse = diff * diffuseStrength * color;
+
+		vec3 reflectDir = glm::reflect(ray.direction, normal);
+		vec3 viewDir = normalize(-fragPos);
+
+		float spec = glm::pow(glm::max(glm::dot(viewDir, reflectDir), 0.0f), shiniStrength);
+		vec3 specular = specularStrength * spec * color;
+
+		vec3 calcColor = (ambient + diffuse + specular) * color;
+
+		return calcColor;
+
+	}
+
 
 	// no intersection - return background color
 	return { 0.3f, 0.3f, 0.4f };
