@@ -5,7 +5,7 @@
 
 // std
 #include <random>
-
+#include <cstdlib>
 // project
 #include "scene.hpp"
 #include "shape.hpp"
@@ -67,21 +67,41 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 
 		vec3 specular_color = mat->specular();
 
-		float mat_shininess = mat->shininess();
+		float visibility = 0.0f;
+		int numShadowRays = 25;
 
-
-		int i = 0;
+		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+		std::mt19937 rng((time(0)));
 
 		for (const auto& light : m_scene->lights()) {
 			//cout << i << endl;
-			i += 1;
-			if (!light->occluded(m_scene, fragPos)) { //if the point of the intersect is not occluded
-				//scene is completely black for light 0 (directional)
-				//has weird shadow for light 1 (point)
-				//mostly ok for light 2 (point)
-				vec3 lightColor = light->ambience();
-				vec3 lightStrength = light->irradiance(fragPos);
-				vec3 lightDir = light->incidentDirection(fragPos);
+			vec3 shadowPoint = fragPos + norm * 1e-4f;
+			vec3 lightColor = light->ambience();
+			vec3 lightStrength = light->irradiance(shadowPoint);
+			vec3 lightDir = light->incidentDirection(shadowPoint);
+			float lightDist = length(lightDir);
+
+			for (int i = 0; i < numShadowRays; ++i) {
+				
+				vec3 jitter = vec3(
+					(dist(rng) - 0.5f) * 0.1f,
+					(dist(rng) - 0.5f) * 0.1f,
+					(dist(rng) - 0.5f) * 0.1f
+				);
+
+				vec3 jitteredDirection = normalize(lightDir + jitter);
+
+				Ray shadowRay(shadowPoint, jitteredDirection);
+				RayIntersection shadowHit = m_scene->intersect(shadowRay);
+
+				if (!shadowHit.m_valid || shadowHit.m_distance > lightDist - 1e-3f) {
+					visibility += 1.0f;
+				}
+			}
+			visibility /= numShadowRays;
+			
+			if (visibility > 0.0f) { //if the point of the intersect is not occluded
+				
 				
 				float ambientStrength = 0.1;
 				vec3 ambient = ambientStrength * lightColor;
@@ -90,19 +110,19 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 
 				vec3 diffuse = mat->diffuse();
 
-				float specularStrength = 0.5;
+				float specularStrength = 0.0;
 				vec3 reflectDir = reflect(-lightDir, norm);
 				vec3 viewDir = normalize(-ray.direction);
 
 				vec3 halfwayDir = normalize(lightDir + viewDir);
-				float spec = glm::pow(glm::max(glm::dot(halfwayDir, norm), 0.0f), mat_shininess);
+				float spec = glm::pow(glm::max(glm::dot(halfwayDir, norm), 0.0f), mat->shininess());
 				vec3 specular = spec * specular_color;
 
-				result += (ambient + diffuse + specular) * (lightStrength);
+				result += (ambient + diffuse + specular) * (lightStrength) * visibility;
 				
 			}
 		}
-
+		//result = pow(result, vec3(1.0f / 2.2f)); //gamma correction i guess
 		return result;
 	}
 	// no intersection - return background color
