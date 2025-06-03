@@ -55,8 +55,9 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 	if (intersect.m_valid) {
 
 		vec3 norm = normalize(intersect.m_normal);
-		if (glm::dot(norm, ray.direction) > 0) norm = -norm;
+
 		vec3 fragPos = intersect.m_position;
+		
 
 		vec3 objectColor(0.5, 0.5, 0.5);
 		vec3 result = vec3(0.0f);
@@ -70,21 +71,19 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 		float mat_shininess = mat->shininess();
 
 
-		int i = 0;
-
+		int i = 0; //used for debugging individual lights
+		float ambientStrength = 0.1;
+		vec3 ambient = ambientStrength * diffuse_color * vec3(1.0f);
+		result += ambient;
 		for (const auto& light : m_scene->lights()) {
 			//cout << i << endl;
-			i += 1;
-			if (!light->occluded(m_scene, fragPos)) { //if the point of the intersect is not occluded
-				//scene is completely black for light 0 (directional)
-				//has weird shadow for light 1 (point)
-				//mostly ok for light 2 (point)
-				vec3 lightColor = light->ambience();
-				vec3 lightStrength = light->irradiance(fragPos);
-				vec3 lightDir = light->incidentDirection(fragPos);
+			vec3 lightColor = light->ambience();
+			vec3 lightStrength = light->irradiance(fragPos);
+			vec3 lightDir = light->incidentDirection(fragPos);
+			vec3 offsetPos = fragPos + 1e-4f * lightDir;
+			if (!light->occluded(m_scene, offsetPos)) { //if the point of the intersect is not occluded
 				
-				float ambientStrength = 0.1;
-				vec3 ambient = ambientStrength * lightColor;
+				
 				//cout << intersect.m_normal.x << "," << intersect.m_normal.y << "," << intersect.m_normal.z << endl;
 				//lightDir = normalize(-lightDir);
 
@@ -95,12 +94,13 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 				vec3 viewDir = normalize(-ray.direction);
 
 				vec3 halfwayDir = normalize(lightDir + viewDir);
-				float spec = glm::pow(glm::max(glm::dot(halfwayDir, norm), 0.0f), mat_shininess);
-				vec3 specular = spec * specular_color;
+				float spec = glm::pow(glm::max(glm::dot(viewDir, reflectDir), 0.0f), mat_shininess);
+				vec3 specular = 0.5f * spec * specular_color;
 
-				result += (ambient + diffuse + specular) * (lightStrength);
+				result += (diffuse + specular) * lightStrength;
 				
 			}
+			i++;
 		}
 
 		return result;
