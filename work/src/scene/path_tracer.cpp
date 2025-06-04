@@ -125,6 +125,10 @@ vec3 CompletionPathTracer::sampleRay(const Ray &ray, int depth) {
 	// YOUR CODE GOES HERE
 	// ...
 
+	
+	if (depth != 0) {
+		vec3 lightResults = CompletionPathTracer::sampleRay(ray, depth - 1);
+	}
 	// no intersection - return background color
 	return { 0.3f, 0.3f, 0.4f };
 }

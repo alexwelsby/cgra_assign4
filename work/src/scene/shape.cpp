@@ -99,14 +99,13 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 		float t1 = (-b + sqrt(discriminant)) / (2 * a);
 		float t2 = (-b - sqrt(discriminant)) / (2 * a);
 		float t = 0.0f;
-		float epsilon = 1e-4f;
-		if (t1 > epsilon && t2 > epsilon) {
+		if (t1 > 0 && t2 > 0) {
 			t = glm::min(t1, t2);
 		}
 		else if (t1 == t2) {
 			t = t1;
 		}
-		else if (t1 < epsilon && t2 > epsilon) {
+		else if (t1 < 0 && t2 > 0) {
 			t = t2;
 		}
 		else {
@@ -131,3 +130,17 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 	return intersect;
 }
 
+RayIntersection Triangle::intersect(const Ray& ray) {
+	RayIntersection intersect;
+	return intersect;
+}
+
+RayIntersection Disk::intersect(const Ray& ray) {
+	RayIntersection intersect;
+	return intersect;
+}
+
+RayIntersection Plane::intersect(const Ray& ray) {
+	RayIntersection intersect;
+	return intersect;
+}
