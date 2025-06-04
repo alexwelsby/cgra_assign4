@@ -99,13 +99,14 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 		float t1 = (-b + sqrt(discriminant)) / (2 * a);
 		float t2 = (-b - sqrt(discriminant)) / (2 * a);
 		float t = 0.0f;
-		if (t1 > 0 && t2 > 0) {
+		float epsilon = 1e-4f;
+		if (t1 > epsilon && t2 > epsilon) {
 			t = glm::min(t1, t2);
 		}
 		else if (t1 == t2) {
 			t = t1;
 		}
-		else if (t1 < 0 && t2 > 0) {
+		else if (t1 < epsilon && t2 > epsilon) {
 			t = t2;
 		}
 		else {
