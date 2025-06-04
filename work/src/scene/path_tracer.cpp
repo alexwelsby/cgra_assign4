@@ -50,60 +50,38 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 	// YOUR CODE GOES HERE
 	// ...
 	RayIntersection intersect = m_scene->intersect(ray);
-
-	// if ray hit something
 	if (intersect.m_valid) {
+		vec3 colour = vec3(0);
+		for (int i = 0; i < m_scene->lights().size(); i++) {
+			std::shared_ptr<Light> light = m_scene->lights().at(i);
+			vec3 diff = intersect.m_material->diffuse();
+			vec3 irradiance = light->irradiance(intersect.m_position);
+			vec3 incidentDir = light->incidentDirection(intersect.m_position);
 
-		vec3 norm = normalize(intersect.m_normal);
+			vec3 diffuseReflec = vec3(0);
+			vec3 specReflec = vec3(0);
 
-		vec3 fragPos = intersect.m_position;
-		
+			vec3 diffuseElem = light->ambience() * diff;
 
-		vec3 objectColor(0.5, 0.5, 0.5);
-		vec3 result = vec3(0.0f);
+			if (!light->occluded(m_scene, intersect.m_position + (intersect.m_normal * 0.0001f))) {
 
-		Material* mat = intersect.m_material;
-
-		vec3 diffuse_color = mat->diffuse();
-
-		vec3 specular_color = mat->specular();
-
-		float mat_shininess = mat->shininess();
+				float angle = dot(intersect.m_normal, normalize(-incidentDir));
+				if (angle >= 0) {
+					diffuseReflec = irradiance * angle * diff;
+				}
 
 
-		int i = 0; //used for debugging individual lights
-		float ambientStrength = 0.1;
-		vec3 ambient = ambientStrength * diffuse_color * vec3(1.0f);
-		result += ambient;
-		for (const auto& light : m_scene->lights()) {
-			//cout << i << endl;
-			vec3 lightColor = light->ambience();
-			vec3 lightStrength = light->irradiance(fragPos);
-			vec3 lightDir = light->incidentDirection(fragPos);
-			vec3 offsetPos = fragPos + 1e-4f * lightDir;
-			if (!light->occluded(m_scene, offsetPos)) { //if the point of the intersect is not occluded
-				
-				
-				//cout << intersect.m_normal.x << "," << intersect.m_normal.y << "," << intersect.m_normal.z << endl;
-				//lightDir = normalize(-lightDir);
-
-				vec3 diffuse = mat->diffuse();
-
-				float specularStrength = 0.5;
-				vec3 reflectDir = reflect(-lightDir, norm);
-				vec3 viewDir = normalize(-ray.direction);
-
-				vec3 halfwayDir = normalize(lightDir + viewDir);
-				float spec = glm::pow(glm::max(glm::dot(viewDir, reflectDir), 0.0f), mat_shininess);
-				vec3 specular = 0.5f * spec * specular_color;
-
-				result += (diffuse + specular) * lightStrength;
-				
+				vec3 reflec = reflect(incidentDir, intersect.m_normal);
+				angle = dot(normalize(reflec), normalize(-ray.direction));
+				if (angle >= 0) {
+					specReflec = irradiance * pow(angle, intersect.m_material->shininess())
+						* intersect.m_material->specular();
+				}
 			}
-			i++;
-		}
 
-		return result;
+			colour += diffuseElem + diffuseReflec + specReflec;
+		}
+		return colour;
 	}
 	// no intersection - return background color
 	return { 0.3f, 0.3f, 0.4f };

@@ -35,6 +35,7 @@ private:
 public:
 	Sphere(const glm::vec3 &c, float radius) : m_center(c), m_radius(radius) { }
 	virtual RayIntersection intersect(const Ray &ray) override;
+	float solveQuadratic(float a, float b, float c);
 };
 
 //-------------------------------------------------------------

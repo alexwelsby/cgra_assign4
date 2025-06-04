@@ -36,31 +36,22 @@ Ray Camera::generateRay(const vec2 &pixel) {
 	
 	Ray ray;
 
-	// YOUR CODE GOES HERE
-	// ...
-	float aspect = m_image_size.x / m_image_size.y;
-	float tan_theta = tan(m_fovy / 2);
-	//PR=(tanθ, 0, –1)
-	//it gets squished if we don't factor in the aspect
-	vec3 Pr = vec3(tan_theta * aspect, 0, -1);
-	//PL=(–tanθ, 0, –1)
-	vec3 Pl = vec3(-tan_theta * aspect, 0, -1);
-	//cout << "HEYYY" << m_image_size.x << "," << m_image_size.y << endl;
-	//Pi = PL + ( i + 0.5 )/N × ( PR – PL )
-	vec2 Pi_x = Pl + (pixel.x + 0.5f) / m_image_size.x * (Pr - Pl);
+    vec2 ndc;
+    ndc.x = (pixel.x + 0.5) / m_image_size.x;
+    ndc.y = (pixel.y + 0.5) / m_image_size.y;
+    vec2 pixS;
+    pixS.x = 2 * ndc.x - 1;
+    pixS.y = 2 * ndc.y - 1;
+    float aspect = m_image_size.x / m_image_size.y;
+    vec2 pixC;
+    pixC.x = pixS.x * aspect * tan(m_fovy / 2);
+    pixC.y = pixS.y * tan(m_fovy / 2);
+    vec3 camS = vec3(pixC.x, pixC.y, -1);
+    vec4 whoa = vec4(camS, 0);
+    whoa = m_rotation * whoa;
+    ray.origin = m_position;
+    vec3 rayDirection = vec3(whoa.x, whoa.y, whoa.z) - ray.origin;
+    ray.direction = normalize(rayDirection);
 
-	//now for vertical>??
-	Pr = vec3(0, tan_theta, -1);
-	Pl = vec3(0, -tan_theta, -1);
-	vec2 Pi_y = Pl + (pixel.y + 0.5f) / m_image_size.y * (Pr - Pl);
-
-	vec3 Pi = vec3(Pi_x.x, Pi_y.y, -1.0f);
-
-	vec3 direction_view = normalize(Pi);
-	vec3 direction_world = normalize(vec3(m_rotation * vec4(direction_view, 0.0f)));
-
-	//ray origin=camera origin
-	ray.origin = m_position;
-	ray.direction = direction_world;
-	return ray;
+    return ray;
 }
