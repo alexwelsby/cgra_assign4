@@ -1,8 +1,7 @@
-﻿
+
 // std
 #include <algorithm>
 #include <utility>
-#include <iostream>
 
 // glm
 #include <glm/glm.hpp>
@@ -61,6 +60,17 @@ RayIntersection AABB::intersect(const Ray &ray) {
 	return intersect;
 }
 
+float Sphere::solveQuadratic(float a, float b, float c) {
+	float discr = b * b - 4 * a * c;
+	float q;
+	if (discr < 0) return -1;
+	else if (discr == 0) q = -0.5 * (b / a);
+	else {
+		q = (b > 0) ? -0.5 * (float)(b - sqrt(discr)) : -0.5 * (float)(b + sqrt(discr));
+	}
+	return q;
+}
+
 
 RayIntersection Sphere::intersect(const Ray &ray) {
 	RayIntersection intersect;
@@ -81,66 +91,27 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 	// YOUR CODE GOES HERE
 	// ...
 
-	vec3 O = ray.origin;
-	vec3 D = ray.direction;
+	vec3 L = ray.origin - m_center;
+	float radius2 = pow(m_radius, 2);
+	float a = dot(ray.direction, ray.direction);
+	float b = 2 * dot(ray.direction, L);
+	float c = dot(L, L) - radius2;
 
-	vec3 C = m_center; //the center of this sphere
-
-	float R = m_radius; 
-	//now for some quadratic nonsense
-	float a = glm::dot(D, D);  //a = D DOT D
-	float b = 2.0f * glm::dot(O - C, D); //b = 2[O − C] DOT D
-	float c = (glm::dot(O - C, O - C)) - (R * R); //c = [O − C] DOT [O − C] − R^2
-	float discriminant = (b * b) - (4 * a * c); //(b^2)-4ac
-	if (discriminant < 0) {
-		return intersect;
-	}
-	else if (discriminant >= 0) { //we have two real solutions
-		float t1 = (-b + sqrt(discriminant)) / (2 * a);
-		float t2 = (-b - sqrt(discriminant)) / (2 * a);
-		float t = 0.0f;
-		if (t1 > 0 && t2 > 0) {
-			t = glm::min(t1, t2);
-		}
-		else if (t1 == t2) {
-			t = t1;
-		}
-		else if (t1 < 0 && t2 > 0) {
-			t = t2;
-		}
-		else {
-			return intersect;
-		}
-
-			
-		vec3 P = O + t * D;
-		vec3 N = glm::normalize(P - C);
-		
-		intersect.m_valid = true;
+	float t = solveQuadratic(a, b, c);
+	if (intersect.m_valid = t >= 0) {
 		intersect.m_distance = t;
-		intersect.m_position = P;
-		intersect.m_normal = N;
+		intersect.m_position = ray.origin + intersect.m_distance * ray.direction;
+		intersect.m_normal = normalize(intersect.m_position - m_center);
 		intersect.m_shape = this;
-		intersect.m_uv_coord = (abs(intersect.m_normal.x) > 0) ?
-			vec2(intersect.m_position.y, intersect.m_position.z) :
-			vec2(intersect.m_position.x, intersect.m_position.y + intersect.m_position.z);
-		return intersect;
+		vec3 point = intersect.m_position - m_center;
+		float theta = atan(point.z, point.x);
+		if (theta < 0) theta += 2 * pi<float>();
+		theta /= pi<float>() * 2;
+		float phi = acos(point.y / m_radius);
+		phi /= pi<float>();
+		intersect.m_uv_coord = vec2(theta, phi);
 	}
-	
+
 	return intersect;
 }
 
-RayIntersection Triangle::intersect(const Ray& ray) {
-	RayIntersection intersect;
-	return intersect;
-}
-
-RayIntersection Disk::intersect(const Ray& ray) {
-	RayIntersection intersect;
-	return intersect;
-}
-
-RayIntersection Plane::intersect(const Ray& ray) {
-	RayIntersection intersect;
-	return intersect;
-}

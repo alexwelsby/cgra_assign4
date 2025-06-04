@@ -35,6 +35,7 @@ private:
 public:
 	Sphere(const glm::vec3 &c, float radius) : m_center(c), m_radius(radius) { }
 	virtual RayIntersection intersect(const Ray &ray) override;
+	float solveQuadratic(float a, float b, float c);
 };
 
 //-------------------------------------------------------------
@@ -47,36 +48,6 @@ public:
 // a class that subclasses Shape making sure that you implement
 // the intersect method for each new Shape.
 //-------------------------------------------------------------
-
-class Triangle : public Shape {
-private:
-	glm::vec3 m_center;
-	float m_radius;
-
-public:
-	Triangle(const glm::vec3& c, float radius) : m_center(c), m_radius(radius) {}
-	virtual RayIntersection intersect(const Ray& ray) override;
-};
-
-class Plane : public Shape {
-private:
-	glm::vec3 m_center;
-	float m_radius;
-
-public:
-	Plane(const glm::vec3& c, float hs) : m_center(c), m_radius(hs) {}
-	virtual RayIntersection intersect(const Ray& ray) override;
-};
-
-class Disk : public Shape {
-private:
-	glm::vec3 m_center;
-	float m_radius;
-
-public:
-	Disk(const glm::vec3& c, float radius) : m_center(c), m_radius(radius) {}
-	virtual RayIntersection intersect(const Ray& ray) override;
-};
 
 // YOUR CODE GOES HERE
 // ...

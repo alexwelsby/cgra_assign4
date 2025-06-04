@@ -1,11 +1,9 @@
-﻿
+
 // glm
 #include <glm/gtc/constants.hpp>
 
 // project
 #include "light.hpp"
-
-#include "scene_object.hpp"
 
 using namespace glm;
 
@@ -22,24 +20,15 @@ bool DirectionalLight::occluded(Scene *scene, const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	Ray shadow_ray;
-	const float epsilon = 1e-4f;
-	shadow_ray.origin = point + epsilon * -m_direction;
-	shadow_ray.direction = -m_direction;
-
-	for (std::shared_ptr<SceneObject> object : scene->objects()) {
-		RayIntersection ray_intersect = object->intersect(shadow_ray);
-		if (ray_intersect.m_valid) {
-			return true;
-		}
-	}
-
-	return false;
+	vec3 reverse = -incidentDirection(point);
+	Ray ray = Ray(point, reverse);
+	RayIntersection intersect = scene->intersect(ray);
+	return intersect.m_valid;
 }
 
 
 vec3 DirectionalLight::incidentDirection(const vec3 &) const {
-	return -glm::normalize(m_direction);
+	return m_direction;
 }
 
 
@@ -61,20 +50,12 @@ bool PointLight::occluded(Scene *scene, const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	Ray shadow_ray;
-	vec3 to_light = m_position - point;
-	float dist_to_light = glm::length(to_light);
-	const float epsilon = 1e-4f;
-	shadow_ray.origin = point + epsilon * to_light;
-	shadow_ray.direction = normalize(to_light);
-
-	for (std::shared_ptr<SceneObject> object : scene->objects()) {
-		RayIntersection hit = object->intersect(shadow_ray);
-		if (hit.m_valid && hit.m_distance < dist_to_light) {
-			return true; //blocked light
-		}
-	}
-	return false; //no occlusion
+	vec3 direc = -incidentDirection(point);
+	float len = length(direc);
+	if (len > 0) direc = normalize(direc);
+	Ray ray = Ray(point, direc);
+	RayIntersection intersect = scene->intersect(ray);
+	return intersect.m_valid && intersect.m_distance < len;
 }
 
 
@@ -87,7 +68,7 @@ vec3 PointLight::incidentDirection(const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	return glm::normalize(m_position - point);
+	return point - m_position;
 }
 
 
@@ -104,15 +85,10 @@ vec3 PointLight::irradiance(const vec3 &point) const {
 	// YOUR CODE GOES HERE
 	// ...
 
-	vec3 to_light = m_position - point;
-	const float epsilon = 1e-4f;
-	float dist_to_light = glm::length(to_light);
-
-	if (dist_to_light < epsilon)
-		return vec3(0.0f); 
-
-	//we divide the total energy of the light by 4π and the squared distance to the point light.
-	vec3 new_flux = m_flux / (4 * glm::pi<float>() * dist_to_light * dist_to_light);
-
-	return new_flux;
+	vec3 direc = -incidentDirection(point);
+	float len = length(direc);
+	if (len > 0) {
+		return m_flux / (4.0f * pi<float>() * powf(len, 2));
+	}
+	return m_flux;
 }
