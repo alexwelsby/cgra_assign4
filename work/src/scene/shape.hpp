@@ -51,10 +51,14 @@ public:
 class Triangle : public Shape {
 private:
 	glm::vec3 m_center;
-	float m_radius;
+	glm::vec3 vertices[3];
 
 public:
-	Triangle(const glm::vec3& c, float radius) : m_center(c), m_radius(radius) {}
+	Triangle(const glm::vec3& c, glm::vec3 side_a, glm::vec3 side_b, glm::vec3 side_c) : m_center(c) {
+	vertices[0] = side_a;
+	vertices[1] = side_b; 
+	vertices[2] = side_c;
+	}
 	virtual RayIntersection intersect(const Ray& ray) override;
 };
 

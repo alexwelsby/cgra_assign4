@@ -123,8 +123,18 @@ Scene Scene::shapeScene() {
 	objects.push_back(make_shared<SceneObject>(make_shared<AABB>(vec3(-3, 0, -5), vec3(0.5)), white));
 	objects.push_back(make_shared<SceneObject>(make_shared<Sphere>(vec3(-1, 0, -5), 0.5), white));
 
+	//objects.push_back(make_shared<SceneObject>(make_shared<Sphere>(vec3(1, 0, -5), 0.5), white));
+
 	// YOUR CODE GOES HERE
 	// ...
+
+	//Triangle
+	glm::vec3 vertex_a = vec3(-0.6, -0.8, -5);
+	glm::vec3 vertex_b = vec3(0.4, 1.2, -5);
+	glm::vec3 vertex_c = vec3(-1.2, 0.2, -5);
+	objects.push_back(make_shared<SceneObject>(make_shared<Triangle>(vec3(1, 0, -5), vertex_a, vertex_b, vertex_c), white));
+
+	objects.push_back(make_shared<SceneObject>(make_shared<Sphere>(vec3(3, 0, -5), 0.5), white));
 
 	lights.push_back(make_shared<DirectionalLight>(vec3(-1, -1, -1), vec3(0.5f), vec3(0.05f)));
 
