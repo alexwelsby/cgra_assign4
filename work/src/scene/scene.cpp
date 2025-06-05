@@ -140,6 +140,8 @@ Scene Scene::shapeScene() {
 	//Disk
 	objects.push_back(make_shared<SceneObject>(make_shared<Disk>(vec3(3, 0, -5), 1.5), white));
 
+	objects.push_back(make_shared<SceneObject>(make_shared<Plane>(vec3(0, -2, -5), 2), white));
+
 	lights.push_back(make_shared<DirectionalLight>(vec3(-1, -1, -1), vec3(0.5f), vec3(0.05f)));
 
 	return Scene(objects, lights);

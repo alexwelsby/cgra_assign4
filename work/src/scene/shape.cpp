@@ -209,8 +209,6 @@ RayIntersection Triangle::intersect(const Ray& ray) {
 RayIntersection Disk::intersect(const Ray& ray) {
 	RayIntersection intersect;
 
-	float epsilon = 1e-4f;
-
 	vec3 O = ray.origin;
 	
 
@@ -251,8 +249,41 @@ RayIntersection Disk::intersect(const Ray& ray) {
 RayIntersection Plane::intersect(const Ray& ray) {
 	RayIntersection intersect;
 	
+	float epsilon = 1e-4f;
 
+	vec3 O = ray.origin;
+
+
+	vec3 C = m_center; //the center of this PLANE
+
+	float R = m_radius;
+
+	vec3 D = ray.direction;
+	vec3 N = glm::vec3(0, 1, 0);   //not P-C because it's not going to be a radial normal
+
+	float DDotN = dot(D, N); // this is l DOT N from https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
+
+	if (DDotN == 0) { //parallel
+		//std::cout << "DDotN equals 0" << std::endl;
+		return intersect;
+	} //also making sure we don't divide by 0 in the next step
+
+	float t = dot((C - O), N) / DDotN; //our ((P0 - l0) DOT N)/l DOT N
+
+	if (t < 0) {
+		return intersect;
+	}
+
+	//our point of intersection
+	vec3 P = O + t * D;
+
+	vec3 dif = P - C;
 	
-
+	intersect.m_valid = true;
+	intersect.m_distance = t;
+	intersect.m_position = P;
+	intersect.m_normal = N;
+	intersect.m_shape = this;
+	//std::cout << "Intersect successful" << std::endl;
 	return intersect;
 }
