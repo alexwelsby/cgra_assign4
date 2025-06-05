@@ -47,8 +47,9 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 	// not need to use the depth argument for this implementation.
 	//-------------------------------------------------------------
 
-	// YOUR CODE GOES HERE
-	// ...
+	// Abby again... I had trouble with this section
+	//tried to compare line by line to see where i went wrong so it's slightly different
+	//original borked code here https://github.com/alexwelsby/cgra_assign4/blob/59f6c3b421a8cbe1e82dfa125c3c64588353d6bd/work/src/scene/path_tracer.cpp#L40
 	RayIntersection intersect = m_scene->intersect(ray);
 	if (intersect.m_valid) {
 		vec3 colour = vec3(0);
@@ -58,24 +59,27 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 			vec3 irradiance = light->irradiance(intersect.m_position);
 			vec3 incidentDir = light->incidentDirection(intersect.m_position);
 
+			vec3 intersect_normal = intersect.m_normal;
+			vec3 intersect_spec = intersect.m_material->specular();
+			float intersect_shininess = intersect.m_material->shininess();
+
 			vec3 diffuseReflec = vec3(0);
 			vec3 specReflec = vec3(0);
 
 			vec3 diffuseElem = light->ambience() * diff;
 
-			if (!light->occluded(m_scene, intersect.m_position + (intersect.m_normal * 0.0001f))) {
+			if (!light->occluded(m_scene, intersect.m_position + (intersect_normal * 0.0001f))) {
 
-				float angle = dot(intersect.m_normal, normalize(-incidentDir));
+				float angle = dot(intersect_normal, normalize(-incidentDir));
 				if (angle >= 0) {
 					diffuseReflec = irradiance * angle * diff;
 				}
 
 
-				vec3 reflec = reflect(incidentDir, intersect.m_normal);
+				vec3 reflec = reflect(incidentDir, intersect_normal);
 				angle = dot(normalize(reflec), normalize(-ray.direction));
 				if (angle >= 0) {
-					specReflec = irradiance * pow(angle, intersect.m_material->shininess())
-						* intersect.m_material->specular();
+					specReflec = irradiance * pow(angle, intersect_shininess) * intersect_spec;
 				}
 			}
 
