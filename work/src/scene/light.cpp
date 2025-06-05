@@ -19,27 +19,17 @@ bool DirectionalLight::occluded(Scene *scene, const vec3 &point) const {
 	// so any object in the way would cause an occlusion.
 	//-------------------------------------------------------------
 
-	// YOUR CODE GOES HERE
-	// ...
+	// from Abby
 
-	Ray shadow_ray;
-	const float epsilon = 1e-4f;
-	shadow_ray.origin = point + epsilon * -m_direction;
-	shadow_ray.direction = -m_direction;
-
-	for (std::shared_ptr<SceneObject> object : scene->objects()) {
-		RayIntersection ray_intersect = object->intersect(shadow_ray);
-		if (ray_intersect.m_valid) {
-			return true;
-		}
-	}
-
-	return false;
+	vec3 reverse = -incidentDirection(point);
+	Ray ray = Ray(point, reverse);
+	RayIntersection intersect = scene->intersect(ray);
+	return intersect.m_valid;
 }
 
 
 vec3 DirectionalLight::incidentDirection(const vec3 &) const {
-	return -glm::normalize(m_direction);
+	return m_direction;
 }
 
 
@@ -62,18 +52,16 @@ bool PointLight::occluded(Scene *scene, const vec3 &point) const {
 	// ...
 
 	Ray shadow_ray;
-	vec3 to_light = m_position - point;
+	vec3 to_light = -incidentDirection(point);
 	float dist_to_light = glm::length(to_light);
 	const float epsilon = 1e-4f;
 	shadow_ray.origin = point + epsilon * to_light;
 	shadow_ray.direction = normalize(to_light);
 
-	for (std::shared_ptr<SceneObject> object : scene->objects()) {
-		RayIntersection hit = object->intersect(shadow_ray);
-		if (hit.m_valid && hit.m_distance < dist_to_light) {
+	RayIntersection intersect = scene->intersect(shadow_ray);
+		if (intersect.m_valid && intersect.m_distance < dist_to_light) {
 			return true; //blocked light
 		}
-	}
 	return false; //no occlusion
 }
 
@@ -84,10 +72,7 @@ vec3 PointLight::incidentDirection(const vec3 &point) const {
 	// Return the direction of the incoming light (light to point)
 	//-------------------------------------------------------------
 
-	// YOUR CODE GOES HERE
-	// ...
-
-	return glm::normalize(m_position - point);
+	return point - m_position;
 }
 
 
@@ -101,18 +86,15 @@ vec3 PointLight::irradiance(const vec3 &point) const {
 	// as the sphere gets bigger, ie. the point is further away.
 	//-------------------------------------------------------------
 
-	// YOUR CODE GOES HERE
-	// ...
+	// Also referenced from Abby
 
-	vec3 to_light = m_position - point;
+	vec3 to_light = -incidentDirection(point);
 	const float epsilon = 1e-4f;
 	float dist_to_light = glm::length(to_light);
 
-	if (dist_to_light < epsilon)
-		return vec3(0.0f); 
-
-	//we divide the total energy of the light by 4π and the squared distance to the point light.
-	vec3 new_flux = m_flux / (4 * glm::pi<float>() * dist_to_light * dist_to_light);
-
-	return new_flux;
+	if (dist_to_light > 0) {
+		//we divide the total energy of the light by 4π and the squared distance to the point light.
+		return m_flux / (4 * glm::pi<float>() * dist_to_light * dist_to_light);
+	}
+	return m_flux;
 }
