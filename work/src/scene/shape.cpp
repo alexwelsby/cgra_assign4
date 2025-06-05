@@ -134,6 +134,7 @@ RayIntersection Triangle::intersect(const Ray& ray) {
 	RayIntersection intersect;
 	float epsilon = 1e-4f;
 
+	//our vertices
 	vec3 A = vertices[0];
 	vec3 B = vertices[1];
 	vec3 C = vertices[2];
@@ -189,7 +190,7 @@ RayIntersection Triangle::intersect(const Ray& ray) {
 	{
 		//std::cout << "for the love of god" << std::endl;
 		vec3 P = ray.origin + ray.direction * t;
-		vec3 N = glm::normalize(P - m_center);
+		vec3 N = glm::vec3(1, 0, 0);
 		intersect.m_valid = true;
 		intersect.m_distance = t;
 		intersect.m_position = P;
@@ -207,10 +208,51 @@ RayIntersection Triangle::intersect(const Ray& ray) {
 
 RayIntersection Disk::intersect(const Ray& ray) {
 	RayIntersection intersect;
+
+	float epsilon = 1e-4f;
+
+	vec3 O = ray.origin;
+	
+
+	vec3 C = m_center; //the center of this sphere
+
+	float R = m_radius;
+
+	vec3 D = ray.direction;
+	vec3 N = glm::vec3(1, 0, 0);   //not P-C because it's not going to be a radial normal
+
+	float DDotN = dot(D, N); // this is l DOT N from https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
+
+	if (DDotN == 0) { //parallel
+		//std::cout << "DDotN equals 0" << std::endl;
+		return intersect;
+	} //also making sure we don't divide by 0 in the next step
+
+	float t = dot((C - O), N) / DDotN; //our ((P0 - l0) DOT N)/l DOT N
+
+	//our point of intersection
+	vec3 P = O + t * D;
+	//okay that's it for our plane calculations. now we need to make sure it's within the disk radius
+
+	if (distance(P, C) > m_radius) { //if our point falls outside our radius
+		//std::cout << "Point falls outside radius" << std::endl;
+		return intersect;
+	}
+
+	intersect.m_valid = true;
+	intersect.m_distance = t;
+	intersect.m_position = P;
+	intersect.m_normal = N;
+	intersect.m_shape = this;
+	//std::cout << "Intersect successful" << std::endl;
 	return intersect;
 }
 
 RayIntersection Plane::intersect(const Ray& ray) {
 	RayIntersection intersect;
+	
+
+	
+
 	return intersect;
 }
