@@ -53,33 +53,32 @@ vec3 CorePathTracer::sampleRay(const Ray &ray, int) {
 	RayIntersection intersect = m_scene->intersect(ray);
 	if (intersect.m_valid) {
 		vec3 colour = vec3(0);
-		for (int i = 0; i < m_scene->lights().size(); i++) {
-			std::shared_ptr<Light> light = m_scene->lights().at(i);
-			vec3 diff = intersect.m_material->diffuse();
+		for (const auto& light : m_scene->lights()) {
 			vec3 irradiance = light->irradiance(intersect.m_position);
+			vec3 ambience = light->ambience();
 			vec3 incidentDir = light->incidentDirection(intersect.m_position);
 
-			vec3 intersect_normal = intersect.m_normal;
-			vec3 intersect_spec = intersect.m_material->specular();
-			float intersect_shininess = intersect.m_material->shininess();
+			vec3 i_diffuse = intersect.m_material->diffuse();
+			vec3 i_normal = intersect.m_normal;
+			vec3 i_spec = intersect.m_material->specular();
+			float i_shininess = intersect.m_material->shininess();
 
 			vec3 diffuseReflec = vec3(0);
 			vec3 specReflec = vec3(0);
 
-			vec3 diffuseElem = light->ambience() * diff;
+			vec3 diffuseElem = light->ambience() * i_diffuse;
 
-			if (!light->occluded(m_scene, intersect.m_position + (intersect_normal * 0.0001f))) {
+			if (!light->occluded(m_scene, intersect.m_position + (i_normal * 0.0001f))) {
 
-				float angle = dot(intersect_normal, normalize(-incidentDir));
+				float angle = dot(i_normal, normalize(-incidentDir));
 				if (angle >= 0) {
-					diffuseReflec = irradiance * angle * diff;
+					diffuseReflec = irradiance * angle * i_diffuse;
 				}
 
-
-				vec3 reflec = reflect(incidentDir, intersect_normal);
+				vec3 reflec = reflect(incidentDir, i_normal);
 				angle = dot(normalize(reflec), normalize(-ray.direction));
 				if (angle >= 0) {
-					specReflec = irradiance * pow(angle, intersect_shininess) * intersect_spec;
+					specReflec = irradiance * pow(angle, i_shininess) * i_spec;
 				}
 			}
 
@@ -106,10 +105,59 @@ vec3 CompletionPathTracer::sampleRay(const Ray &ray, int depth) {
 
 	// YOUR CODE GOES HERE
 	// ...
+	float epsilon = 1e05f;
+	RayIntersection intersect = m_scene->intersect(ray);
+	if (intersect.m_valid) {
+		vec3 color = vec3(0);
 
-	
-	if (depth != 0) {
-		vec3 lightResults = CompletionPathTracer::sampleRay(ray, depth - 1);
+		vec3 i_diffuse = intersect.m_material->diffuse();
+		vec3 i_normal = intersect.m_normal;
+		vec3 i_spec = intersect.m_material->specular();
+		float i_shininess = intersect.m_material->shininess();
+
+		for (const auto& light : m_scene->lights()) {
+			vec3 irradiance = light->irradiance(intersect.m_position);
+			vec3 ambience = light->ambience();
+			vec3 incidentDir = light->incidentDirection(intersect.m_position);
+
+			vec3 diffuseReflec = vec3(0);
+			vec3 specReflec = vec3(0);
+
+			vec3 diffuseElem = light->ambience() * i_diffuse;
+
+			if (!light->occluded(m_scene, intersect.m_position + (i_normal * 0.0001f))) {
+
+				float angle = dot(i_normal, normalize(-incidentDir));
+				if (angle >= 0) {
+					diffuseReflec = irradiance * angle * i_diffuse;
+				}
+				//call the reflect function with the surface’s normal and the original ray’s direction
+				vec3 reflec = reflect(i_normal, ray.direction);
+				Ray reflectRay;
+				//The ray’s origin is of course the point where the primary ray hit the surface.
+				reflectRay.origin = reflec + 0.00001f;
+				reflectRay.direction = reflec;
+				float reflectivity = 1.0f - (1.0f / i_shininess);
+				//cout << reflectivity << endl;
+				if (depth > 0) {
+					specReflec += (sampleRay(reflectRay, depth - 1) * reflectivity);
+				}
+				else {
+					if (angle >= 0) {
+						specReflec += irradiance * pow(angle, i_shininess) * i_spec;
+					}
+					
+				}
+			}
+			
+			color += diffuseElem + diffuseReflec + specReflec;
+		}
+		//now for recursive reflections...
+		
+		//vec3 reflectVec = reflect(ray.direction, i_normal);
+		
+
+		return color;
 	}
 	// no intersection - return background color
 	return { 0.3f, 0.3f, 0.4f };
