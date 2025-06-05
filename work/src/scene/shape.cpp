@@ -132,6 +132,76 @@ RayIntersection Sphere::intersect(const Ray &ray) {
 
 RayIntersection Triangle::intersect(const Ray& ray) {
 	RayIntersection intersect;
+	float epsilon = 1e-4f;
+
+	vec3 A = vertices[0];
+	vec3 B = vertices[1];
+	vec3 C = vertices[2];
+
+	//centroid
+	vec3 centroid = (A + B + C) / 3.0f;
+
+	//shifting towards our triangle's center
+	vec3 offset = m_center - centroid;
+
+	A += offset;
+	B += offset;
+	C += offset;
+
+	//Möller–Trumbore
+	//Taken from https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+	vec3 edge1 = B - A;
+	vec3 edge2 = C - A;
+
+	vec3 ray_cross_e2 = glm::cross(ray.direction, edge2);
+	float det = glm::dot(edge1, ray_cross_e2);
+	
+	if (det > -epsilon && det < epsilon) {
+		//std::cout << "cout 1" << std::endl;
+		return intersect;    // This ray is parallel to this triangle.
+	}
+	
+	float inv_det = 1.0 / det;
+	vec3 s = ray.origin - A;
+	float u = inv_det * glm::dot(s, ray_cross_e2);
+
+	if ((u < 0 && abs(u) > epsilon) || (u > 1 && abs(u - 1) > epsilon)) {
+		//std::cout << "cout 2" << std::endl;
+		return intersect;
+	}
+
+		
+
+	vec3 s_cross_e1 = glm::cross(s, edge1);
+	float v = inv_det * glm::dot(ray.direction, s_cross_e1);
+
+	if ((v < 0 && abs(v) > epsilon) || (u + v > 1 && abs(u + v - 1) > epsilon)) {
+		
+		//std::cout << "cout 3" << std::endl; 
+		return intersect;
+	}
+		
+
+	// At this stage we can compute t to find out where the intersection point is on the line.
+	float t = inv_det * dot(edge2, s_cross_e1);
+
+	if (t > epsilon) // ray intersection
+	{
+		//std::cout << "for the love of god" << std::endl;
+		vec3 P = ray.origin + ray.direction * t;
+		vec3 N = glm::normalize(P - m_center);
+		intersect.m_valid = true;
+		intersect.m_distance = t;
+		intersect.m_position = P;
+		intersect.m_normal = N;
+		intersect.m_shape = this;
+		return intersect;
+	}
+	else // This means that there is a line intersection but not a ray intersection.
+		//std::cout << "cout 4" << std::endl;
+		return intersect;
+
+
 	return intersect;
 }
 
